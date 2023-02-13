@@ -1,4 +1,4 @@
-import window
+from window import MainWindow
 from gi import require_version
 
 require_version("Gtk", "4.0")
@@ -13,7 +13,7 @@ class rMakerApplication(Adw.Application):
 
     def do_activate(self):
         if not self.window:
-            self.window = window.MainWindow(application=self)
+            self.window = MainWindow(application=self)
         self.window.present()
 
 

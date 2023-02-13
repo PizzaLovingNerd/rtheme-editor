@@ -1,4 +1,5 @@
-import new_dialog
+from new_dialog import NewDialog
+from theme import Theme
 from gi import require_version
 
 require_version("Gtk", "4.0")
@@ -17,10 +18,6 @@ class Editor(Gtk.Box):
         self.contentBox.set_vexpand(True)
         self.contentBox.set_hexpand(True)
 
-        # Add Sidebar
-        # sidebar = Sidebar()
-        # self.contentBox.append(sidebar)
-
         # Add welcome content
         window_handle = Gtk.WindowHandle()
         window_handle.set_vexpand(True)
@@ -30,50 +27,6 @@ class Editor(Gtk.Box):
         self.contentBox.append(window_handle)
 
         self.append(self.contentBox)
-
-
-class Sidebar(Gtk.ListBox):
-    def __init__(self):
-        super().__init__()
-
-        self.set_selection_mode(Gtk.SelectionMode.NONE)
-        self.set_hexpand(False)
-        self.set_vexpand(True)
-        self.set_valign(Gtk.Align.FILL)
-        self.set_halign(Gtk.Align.START)
-        self.set_size_request(175, -1)
-
-        # Sidebar Icon/Name Grid
-        grid = Gtk.Grid()
-        grid.set_margin_top(20)
-        grid.set_margin_bottom(20)
-        grid.set_margin_start(20)
-        grid.set_margin_end(20)
-        grid.set_valign(Gtk.Align.CENTER)
-        grid.set_halign(Gtk.Align.CENTER)
-        grid_row = Gtk.ListBoxRow(selectable=False, activatable=False)
-        grid_row.set_child(grid)
-        self.append(grid_row)
-
-        # Sidebar Icon
-        # self_logo = Gtk.Image.new_from_file("../icons/rThemeEditor.png")
-        # self_logo.set_pixel_size(32)
-        # self_logo.set_margin_end(10)
-        # grid.attach(self_logo, 0, 0, 1, 2)
-
-        # Sidebar Name
-        self_name = Gtk.Label()
-        self_name.set_markup(APP_NAME)
-        self_name.set_halign(Gtk.Align.START)
-        self_name.set_valign(Gtk.Align.START)
-        grid.attach(self_name, 1, 0, 1, 1)
-
-        # Sidebar Version
-        self_version = Gtk.Label()
-        self_version.set_markup("v0.1.0")
-        self_version.set_halign(Gtk.Align.START)
-        self_version.set_valign(Gtk.Align.START)
-        grid.attach(self_version, 1, 1, 1, 1)
 
 
 class WelcomeContent(Gtk.Box):
@@ -109,36 +62,34 @@ class WelcomeContent(Gtk.Box):
         text_box.append(small_welcome)
 
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        new_button = Gtk.Button(label="New Project")
-        new_button.connect("clicked", self.new_project)
-        open_button = Gtk.Button(label="Open Project")
-        open_button.connect("clicked", self.open_project)
+        new_button = Gtk.Button(label="New Theme")
+        new_button.connect("clicked", self.new_theme)
+        open_button = Gtk.Button(label="Open Existing Theme")
+        open_button.connect("clicked", self.open_theme)
         button_box.append(new_button)
         button_box.append(open_button)
         text_box.append(button_box)
 
         self.open_dialog = Gtk.FileChooserNative.new(
             parent=window,
-            title="Please choose a project.yml file",
+            title="Please choose a *.rtheme file",
             action=Gtk.FileChooserAction.OPEN,
         )
-        self.open_dialog.connect("response", self.project_picker_response)
+        self.open_dialog.connect("response", self.theme_picker_response)
 
         filefilter = Gtk.FileFilter()
-        filefilter.add_pattern("project.yml")
+        filefilter.add_pattern("*.rtheme")
         self.open_dialog.set_filter(filefilter)
 
-    def new_project(self, widget):
-        new_window = new_dialog.NewDialog(self.window)
+    def new_theme(self, widget):
+        new_window = NewDialog(self.window)
         new_window.present()
 
-    def open_project(self, widget):
+    def open_theme(self, widget):
         self.open_dialog.show()
 
-    def project_picker_response(self, widget, response):
+    def theme_picker_response(self, widget, response):
         if response == Gtk.ResponseType.ACCEPT:
-            # project = project_manager.Project.new_from_dir(widget.get_file().get_parent().get_path())
-            # self.window.stack.set_visible_child_name("projectEditor")
-            # project.export_yaml()
-            # self.window.project_editor.set_project(project)
-            pass
+            self.theme = Theme(file=widget.get_file().get_path())
+            self.window.stack.set_visible_child_name("themeEditor")
+            self.window.theme_editor.set_theme(self.theme)
