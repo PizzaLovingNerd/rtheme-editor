@@ -1,5 +1,6 @@
+from copy import deepcopy
 from typing import Any, Dict, Optional
-from yaml import safe_load
+from yaml import safe_load, safe_dump
 
 """
 flags:
@@ -57,6 +58,10 @@ main:
 
 
 """
+
+FLAGS = "flags"
+MAIN = "main"
+GLOBAL = "global"
 
 
 def apply_transforms(base: str, transformations: Dict[str, str]) -> str:
@@ -141,27 +146,55 @@ class Theme:
         self.file = file
         self.flags: Dict[str, Dict[str, str]] = {}
         self.global_props: Dict[str, str] = {}
+        self.variants: Dict[str, Dict[str, str]] = {}
 
         if self.file != None:
             with open(self.file, "r") as f:
                 yaml = safe_load(f.read())
+                self._default = deepcopy(yaml)
 
             if not isinstance(yaml, dict):
                 raise ValueError(
                     "Invalid yaml format, must have top level key declarations"
                 )
 
-            if "flags" in yaml and isinstance(yaml["flags"], list):
-                for flag in yaml["flags"]:
+            if FLAGS in yaml and isinstance(yaml[FLAGS], list):
+                for flag in yaml[FLAGS]:
                     self.flags[flag] = {}
 
-            if "main" in yaml and isinstance(yaml["main"], dict):
-                for section, props in yaml["main"].items():
-                    validate_props(props)
-                    if section == "global":
+            if MAIN in yaml and isinstance(yaml[MAIN], dict):
+                for section, props in yaml[MAIN].items():
+                    validate_props(props, section)
+                    if section == GLOBAL:
                         self.global_props = props
                     elif section in self.flags:
                         self.flags[section] = props
+            if FLAGS in yaml:
+                del yaml[FLAGS]
+            if MAIN in yaml:
+                del yaml[MAIN]
+
+            for variant, flags in yaml.items():
+                if not isinstance(flags, dict):
+                    raise ValueError(
+                        f"Flags/global sections must contain key/value props in variant {variant}"
+                    )
+                for flag, props in flags.items():
+                    validate_props(props, f"{variant}.{flag}")
+            self.variants = yaml
+
+    def _as_dict(self) -> dict:
+        return {
+            FLAGS: list(self.flags.keys()),
+            MAIN: {**self.flags, GLOBAL: self.global_props},
+            **self.variants,
+        }
 
     def export(self):
-        pass
+        if not self.file:
+            return
+        with open(self.file, "w") as f:
+            safe_dump(self._as_dict(), f)
+
+    def is_default(self) -> bool:
+        return self._default == self._as_dict()

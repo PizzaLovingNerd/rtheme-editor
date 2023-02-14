@@ -28,13 +28,20 @@ class ThemeEditor(Content):
         self.save_button.set_valign(Gtk.Align.CENTER)
         self.save_button.connect("clicked", self.save_theme)
         self.titlebar.pack_end(self.save_button)
+        self.check_savable()
 
+        # File Save Picker
         self.save_picker = file_picker(
             window,
             self.choose_file,
             Gtk.FileChooserAction.SAVE,
             "Choose where to save the rtheme",
         )
+
+        # Test button
+        open_button = Gtk.Button(label="Test")
+        open_button.connect("clicked", lambda _: self.check_savable())
+        self.append(open_button)
 
     def choose_file(self, widget, response):
         if response == Gtk.ResponseType.ACCEPT and self.theme:
@@ -49,10 +56,16 @@ class ThemeEditor(Content):
     def save_theme(self, _):
         if self.theme and self.theme.file is not None:
             self.theme.export()
+            self.check_savable()
         else:
             self.save_picker.show()
 
     def check_savable(self) -> bool:
-        savable = self.theme is not None and os.path.exists(str(self.theme.file))
+        savable = (
+            self.theme is not None
+            and self.theme.file is not None
+            and os.path.exists(self.theme.file)
+            and not self.theme.is_default()
+        )
         self.save_button.set_sensitive(savable)
         return savable
