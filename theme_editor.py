@@ -5,16 +5,10 @@ require_version("Gtk", "4.0")
 require_version("Adw", "1")
 from gi.repository import Gtk, Adw  # type: ignore
 
-_HOME = os.path.expanduser("~")
+from typing import Optional
+from theme import Theme
 
-# Stack with Basic and Advanced pages
-# Basic Pages:
-# - Metadata
-# - Repositories
-# - Packages
-# - Kickstart
-# - Gsettings
-# - Branding
+_HOME = os.path.expanduser("~")
 
 
 class ThemeEditor(Gtk.Box):
@@ -23,7 +17,7 @@ class ThemeEditor(Gtk.Box):
         self.set_orientation(Gtk.Orientation.VERTICAL)
         self.set_vexpand(True)
         self.set_hexpand(True)
-        self.project = None
+        self.project: Optional[Theme] = None
 
         # Titlebar
         self.titlebar = Adw.HeaderBar()
@@ -32,54 +26,6 @@ class ThemeEditor(Gtk.Box):
         self.save_button.set_valign(Gtk.Align.CENTER)
         self.save_button.connect("clicked", self.save_project)
         self.titlebar.pack_end(self.save_button)
-
-        # Stack and StackSwitcher
-        self.stack = Gtk.Stack()
-        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        self.stack.set_transition_duration(500)
-        self.stack_switcher = Gtk.StackSwitcher()
-        self.stack_switcher.set_stack(self.stack)
-        self.titlebar.set_title_widget(self.stack_switcher)
-        self.append(self.titlebar)
-        self.append(self.stack)
-
-        # Basic Stack
-        basic_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.basic_stack = Gtk.Stack()
-        self.basic_stack.set_margin_top(20)
-        self.basic_stack.set_margin_start(20)
-        self.basic_stack.set_margin_end(20)
-        self.basic_stack.set_margin_bottom(20)
-        self.basic_stack.set_vexpand(True)
-        self.basic_stack.set_hexpand(True)
-        self.basic_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_UP_DOWN)
-        self.basic_stack.set_transition_duration(500)
-        basic_sidebar = Gtk.StackSidebar()
-        basic_sidebar.set_stack(self.basic_stack)
-        basic_sidebar.set_size_request(175, -1)
-        basic_sidebar.add_css_class("sidebar")
-        basic_box.append(basic_sidebar)
-        basic_box.append(self.basic_stack)
-        self.stack.add_titled(basic_box, "basic", "Basic")
-
-        # Advanced Stack
-        advanced_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.advanced_stack = Gtk.Stack()
-        self.advanced_stack.set_margin_top(20)
-        self.advanced_stack.set_margin_start(20)
-        self.advanced_stack.set_margin_end(20)
-        self.advanced_stack.set_margin_bottom(20)
-        self.advanced_stack.set_vexpand(True)
-        self.advanced_stack.set_hexpand(True)
-        self.advanced_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_UP_DOWN)
-        self.advanced_stack.set_transition_duration(500)
-        advanced_sidebar = Gtk.StackSidebar()
-        advanced_sidebar.set_stack(self.advanced_stack)
-        advanced_sidebar.set_size_request(175, -1)
-        advanced_sidebar.add_css_class("sidebar")
-        advanced_box.append(advanced_sidebar)
-        advanced_box.append(self.advanced_stack)
-        self.stack.add_titled(advanced_box, "advanced", "Advanced")
 
     def save_project(self, button):
         self.metadata_page.save_project()
