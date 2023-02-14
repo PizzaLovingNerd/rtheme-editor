@@ -1,6 +1,8 @@
 import os.path
 from gi import require_version
 
+from common import APP_NAME, Content, file_picker
+
 require_version("Gtk", "4.0")
 require_version("Adw", "1")
 from gi.repository import Gtk, Adw  # type: ignore
@@ -11,51 +13,46 @@ from theme import Theme
 _HOME = os.path.expanduser("~")
 
 
-class ThemeEditor(Gtk.Box):
-    def __init__(self):
+class ThemeEditor(Content):
+    def __init__(self, window=Adw.ApplicationWindow):
         super().__init__()
+        self.window = window
         self.set_orientation(Gtk.Orientation.VERTICAL)
         self.set_vexpand(True)
         self.set_hexpand(True)
-        self.project: Optional[Theme] = None
+        self.theme: Optional[Theme] = None
 
         # Titlebar
-        self.titlebar = Adw.HeaderBar()
         self.save_button = Gtk.Button(icon_name="document-save-symbolic")
         self.save_button.set_tooltip_text("Save Project")
         self.save_button.set_valign(Gtk.Align.CENTER)
-        self.save_button.connect("clicked", self.save_project)
+        self.save_button.connect("clicked", self.save_theme)
         self.titlebar.pack_end(self.save_button)
 
-    def save_project(self, button):
-        self.metadata_page.save_project()
-        self.repositories_page.save_project()
-        self.packages_page.save_project()
-        # self.project.export_yaml()
-        self.save_button.set_sensitive(False)
+        self.save_picker = file_picker(
+            window,
+            self.choose_file,
+            Gtk.FileChooserAction.SAVE,
+            "Choose where to save the rtheme",
+        )
 
-    def set_project(self, project):
-        self.project = project
-        self.metadata_page.set_project(project)
-        self.repositories_page.set_project(project)
-        self.packages_page.set_project(project)
+    def choose_file(self, widget, response):
+        if response == Gtk.ResponseType.ACCEPT and self.theme:
+            file = str(widget.get_file().get_path())
+            if not file.endswith(".rtheme"):
+                file += ".rtheme"
+            self.theme.file = file
+            self.window.stack.set_visible_child_name("themeEditor")
+            self.window.theme_editor.theme = self.theme
+            self.save_theme(None)
+
+    def save_theme(self, _):
+        if self.theme and self.theme.file is not None:
+            self.theme.export()
+        else:
+            self.save_picker.show()
 
     def check_savable(self) -> bool:
-        savable = False
-        if self.is_valid():
-            if self.metadata_page.check_savable():
-                savable = True
-            if self.repositories_page.check_savable():
-                savable = True
-            if self.packages_page.check_savable():
-                savable = True
+        savable = self.theme is not None and os.path.exists(str(self.theme.file))
         self.save_button.set_sensitive(savable)
         return savable
-
-    def is_valid(self) -> bool:
-        valid = True
-        if not self.metadata_page.check_valid():
-            valid = False
-        if not self.repositories_page.check_valid():
-            valid = False
-        return valid

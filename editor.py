@@ -1,12 +1,10 @@
-from new_dialog import NewDialog
+from common import APP_NAME, Content, file_picker
 from theme import Theme
 from gi import require_version
 
 require_version("Gtk", "4.0")
 require_version("Adw", "1")
 from gi.repository import Gtk, Adw  # type: ignore
-
-APP_NAME = "<b>rTheme Editor</b>"
 
 
 class Editor(Gtk.Box):
@@ -29,20 +27,10 @@ class Editor(Gtk.Box):
         self.append(self.contentBox)
 
 
-class WelcomeContent(Gtk.Box):
+class WelcomeContent(Content):
     def __init__(self, window):
-        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        super().__init__()
         self.window = window
-        self.set_vexpand(True)
-        self.set_hexpand(True)
-
-        # Add Titlebar
-        self.titlebar = Adw.HeaderBar()
-        self.titlebar.add_css_class("flat")
-        self.titlebarLabel = Gtk.Label()
-        self.titlebarLabel.set_markup(APP_NAME)
-        self.titlebar.set_title_widget(self.titlebarLabel)
-        self.append(self.titlebar)
 
         # Text Box
         text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
@@ -70,20 +58,15 @@ class WelcomeContent(Gtk.Box):
         button_box.append(open_button)
         text_box.append(button_box)
 
-        self.open_dialog = Gtk.FileChooserNative.new(
-            parent=window,
-            title="Please choose a *.rtheme file",
-            action=Gtk.FileChooserAction.OPEN,
+        self.open_dialog = file_picker(
+            window,
+            self.theme_picker_response,
+            Gtk.FileChooserAction.OPEN,
+            "Please choose a *.rtheme file to edit",
         )
-        self.open_dialog.connect("response", self.theme_picker_response)
-
-        filefilter = Gtk.FileFilter()
-        filefilter.add_pattern("*.rtheme")
-        self.open_dialog.set_filter(filefilter)
 
     def new_theme(self, widget):
-        new_window = NewDialog(self.window)
-        new_window.present()
+        pass
 
     def open_theme(self, widget):
         self.open_dialog.show()
@@ -92,4 +75,4 @@ class WelcomeContent(Gtk.Box):
         if response == Gtk.ResponseType.ACCEPT:
             self.theme = Theme(file=widget.get_file().get_path())
             self.window.stack.set_visible_child_name("themeEditor")
-            self.window.theme_editor.set_theme(self.theme)
+            self.window.theme_editor.theme = self.theme

@@ -27,5 +27,5 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.add_named(self.editor, "welcome")
 
         # Import project editor
-        self.project_editor = ThemeEditor()
-        self.stack.add_named(self.project_editor, "themeEditor")
+        self.theme_editor = ThemeEditor(self)
+        self.stack.add_named(self.theme_editor, "themeEditor")

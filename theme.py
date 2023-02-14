@@ -162,3 +162,6 @@ class Theme:
                         self.global_props = props
                     elif section in self.flags:
                         self.flags[section] = props
+
+    def export(self):
+        pass
